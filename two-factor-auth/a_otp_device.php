@@ -1,76 +1,94 @@
 <?php
 /**
- * 2FA — Trusted Device Helper
+ * 2FA — Trusted Device Helper (cookie-only, sin BD)
  *
- * Gestiona el reconocimiento del dispositivo del usuario para decidir si
- * es necesario solicitar OTP según la política del cliente.
+ * Decide si hay que pedir OTP en el login actual leyendo:
+ *   - $_SESSION["otpaut_cli"]    1 = pedir OTP, 0 = no pedir
+ *   - $_SESSION["totpfrq_cli"]   minutos de vigencia de la ventana de gracia.
+ *                                Si es 0 o vacío → siempre pedir OTP.
  *
- * Depende de:
- *   - arr_rcri1(), valor_rcri(), ejecutar()   (e_conexion.php / e_tools.php)
- *   - Tabla a_userdev y columnas e_customer.otpfrq_cli / otpmin_cli
- *     (ver sql/001_device_trust.sql)
+ * La "identidad" del dispositivo vive en una cookie firmada `did`:
+ *   payload = base64url(json_encode({ u: <login_usy>, t: <ts_unix> }))
+ *   cookie  = payload . "." . hmac_sha256(payload, secret)
+ *
+ * De esa cookie podemos extraer el login del usuario y el timestamp de su
+ * último logueo efectivo, y con eso decidir sin tocar BD.
+ *
+ * La cookie es por equipo + usuario: si otro usuario se autentica en el
+ * mismo PC, la cookie se sobreescribe.
  */
 
-if (!defined('OTP_DEVICE_COOKIE'))       define('OTP_DEVICE_COOKIE',    'did');
-if (!defined('OTP_DEVICE_TTL_DAYS'))     define('OTP_DEVICE_TTL_DAYS',  90);
-if (!defined('OTP_DEVICE_SECRET_ENV'))   define('OTP_DEVICE_SECRET_ENV', 'OTP_DEVICE_SECRET');
+if (!defined('OTP_DEVICE_COOKIE'))     define('OTP_DEVICE_COOKIE',    'did');
+if (!defined('OTP_DEVICE_TTL_DAYS'))   define('OTP_DEVICE_TTL_DAYS',  90);
+if (!defined('OTP_DEVICE_SECRET_ENV')) define('OTP_DEVICE_SECRET_ENV', 'OTP_DEVICE_SECRET');
 
 /* -------------------------------------------------------------------------- */
-/* Utilidades base                                                            */
+/* Base                                                                        */
 /* -------------------------------------------------------------------------- */
 
 function otp_dev_secret() {
     $s = getenv(OTP_DEVICE_SECRET_ENV);
     if ($s) return $s;
     if (defined('ALONE_OTP_DEVICE_SECRET')) return ALONE_OTP_DEVICE_SECRET;
-    // TODO: define ALONE_OTP_DEVICE_SECRET en aloneconfig.php con un valor
-    //       de al menos 32 bytes aleatorios antes de usar en producción.
+    // TODO: define ALONE_OTP_DEVICE_SECRET en aloneconfig.php con >= 32 bytes aleatorios
     return 'change-me-please-in-aloneconfig';
 }
 
-function otp_dev_ip() {
-    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'] as $k) {
-        if (!empty($_SERVER[$k])) {
-            $ip = trim(explode(',', $_SERVER[$k])[0]);
-            if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
-        }
-    }
-    return '';
+function otp_dev_b64u_encode($raw) {
+    return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
 }
 
-function otp_dev_ua() {
-    return substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
+function otp_dev_b64u_decode($enc) {
+    $pad = strlen($enc) % 4;
+    if ($pad) $enc .= str_repeat('=', 4 - $pad);
+    return base64_decode(strtr($enc, '-_', '+/'));
 }
 
 /* -------------------------------------------------------------------------- */
-/* Cookie firmada                                                             */
+/* Firma y verificación de la cookie                                           */
 /* -------------------------------------------------------------------------- */
 
-/** Firma un UUID crudo con HMAC-SHA256; devuelve "uuid.sig" */
-function otp_dev_sign($uuid) {
-    $sig = hash_hmac('sha256', $uuid, otp_dev_secret());
-    return $uuid . '.' . $sig;
+/**
+ * Construye el valor de cookie firmado a partir de login + timestamp.
+ * @return string "<payload>.<sig>"
+ */
+function otp_dev_pack($login_usy, $ts) {
+    $payload = otp_dev_b64u_encode(json_encode([
+        'u' => (string) $login_usy,
+        't' => (int)    $ts,
+    ]));
+    $sig = hash_hmac('sha256', $payload, otp_dev_secret());
+    return $payload . '.' . $sig;
 }
 
-/** Verifica el valor firmado; devuelve el uuid crudo o '' si es inválido */
-function otp_dev_verify($signed) {
-    if (!$signed || strpos($signed, '.') === false) return '';
-    list($uuid, $sig) = explode('.', $signed, 2);
-    $expected = hash_hmac('sha256', $uuid, otp_dev_secret());
-    return hash_equals($expected, $sig) ? $uuid : '';
+/**
+ * Lee y valida la cookie firmada. Devuelve ['u' => login, 't' => ts] o null.
+ */
+function otp_dev_unpack($signed) {
+    if (!$signed || strpos($signed, '.') === false) return null;
+
+    list($payload, $sig) = explode('.', $signed, 2);
+    $expected = hash_hmac('sha256', $payload, otp_dev_secret());
+    if (!hash_equals($expected, $sig)) return null;
+
+    $raw  = otp_dev_b64u_decode($payload);
+    $data = json_decode($raw, true);
+
+    if (!is_array($data) || empty($data['u']) || empty($data['t'])) return null;
+    return ['u' => (string) $data['u'], 't' => (int) $data['t']];
 }
 
 function otp_dev_read_cookie() {
-    return otp_dev_verify($_COOKIE[OTP_DEVICE_COOKIE] ?? '');
+    return otp_dev_unpack($_COOKIE[OTP_DEVICE_COOKIE] ?? '');
 }
 
-function otp_dev_set_cookie($uuid) {
-    $signed = otp_dev_sign($uuid);
+function otp_dev_write_cookie($login_usy, $ts) {
+    $val    = otp_dev_pack($login_usy, $ts);
     $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     $exp    = time() + (OTP_DEVICE_TTL_DAYS * 86400);
 
     if (PHP_VERSION_ID >= 70300) {
-        setcookie(OTP_DEVICE_COOKIE, $signed, [
+        setcookie(OTP_DEVICE_COOKIE, $val, [
             'expires'  => $exp,
             'path'     => '/',
             'secure'   => $secure,
@@ -78,60 +96,62 @@ function otp_dev_set_cookie($uuid) {
             'samesite' => 'Lax',
         ]);
     } else {
-        setcookie(OTP_DEVICE_COOKIE, $signed, $exp, '/; samesite=Lax', '', $secure, true);
+        setcookie(OTP_DEVICE_COOKIE, $val, $exp, '/; samesite=Lax', '', $secure, true);
     }
 }
 
-function otp_dev_hash($uuid) {
-    return hash('sha256', $uuid);
+function otp_dev_delete_cookie() {
+    $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    if (PHP_VERSION_ID >= 70300) {
+        setcookie(OTP_DEVICE_COOKIE, '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => $secure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+    } else {
+        setcookie(OTP_DEVICE_COOKIE, '', time() - 3600, '/; samesite=Lax', '', $secure, true);
+    }
+    unset($_COOKIE[OTP_DEVICE_COOKIE]);
 }
 
 /* -------------------------------------------------------------------------- */
-/* Lógica de decisión                                                         */
+/* Decisión                                                                    */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Decide si hay que pedir OTP en el login actual.
+ * ¿Hay que pedir OTP en el login actual?
  *
- * @param int|numeric $codigo_usy
- * @param int         $otpaut_cli  0=off, 1=email, 2=sms, 3=email+sms
- * @param int         $otpfrq_cli  1=always, 2=grace
- * @param int         $otpmin_cli  minutos de gracia (si otpfrq_cli=2)
+ * @param string $login_usy  login del usuario que se está autenticando
  * @return array ['require_otp' => bool, 'reason' => string]
  */
-function otp_dev_should_require($codigo_usy, $otpaut_cli, $otpfrq_cli, $otpmin_cli) {
-    if ((int) $otpaut_cli === 0) {
+function otp_dev_should_require($login_usy) {
+    // 1) OTP deshabilitado a nivel de cliente
+    if ((int) ($_SESSION['otpaut_cli'] ?? 0) !== 1) {
         return ['require_otp' => false, 'reason' => 'otp_disabled'];
     }
-    if ((int) $otpfrq_cli !== 2) {
+
+    // 2) Sin ventana de gracia configurada → siempre pedir
+    $mins = (int) ($_SESSION['totpfrq_cli'] ?? 0);
+    if ($mins <= 0) {
         return ['require_otp' => true, 'reason' => 'policy_always'];
     }
 
-    $uuid = otp_dev_read_cookie();
-    if (!$uuid) {
+    // 3) Leer la cookie
+    $data = otp_dev_read_cookie();
+    if ($data === null) {
         return ['require_otp' => true, 'reason' => 'no_device_cookie'];
     }
 
-    $hash       = otp_dev_hash($uuid);
-    $mins       = max(1, (int) $otpmin_cli);
-    $codigo_usy = (int) $codigo_usy;
-
-    $row = arr_rcri1(
-        "SELECT codigo_dev,
-                EXTRACT(EPOCH FROM (current_timestamp - fecult_dev))/60 AS mins
-         FROM a_userdev
-         WHERE codigo_usy = $codigo_usy
-           AND hash_dev   = '" . addslashes($hash) . "'
-           AND codigo_est = 1
-           AND fecult_dev IS NOT NULL
-         LIMIT 1",
-        0
-    );
-
-    if (!is_array($row) || count($row) === 0) {
-        return ['require_otp' => true, 'reason' => 'device_unknown'];
+    // 4) La cookie debe pertenecer al MISMO login que se está autenticando
+    if ($data['u'] !== (string) $login_usy) {
+        return ['require_otp' => true, 'reason' => 'device_other_user'];
     }
-    if ((float) $row[0]['mins'] > $mins) {
+
+    // 5) Verificar la ventana de gracia
+    $elapsedMin = (time() - $data['t']) / 60;
+    if ($elapsedMin > $mins) {
         return ['require_otp' => true, 'reason' => 'grace_expired'];
     }
 
@@ -139,62 +159,15 @@ function otp_dev_should_require($codigo_usy, $otpaut_cli, $otpfrq_cli, $otpmin_c
 }
 
 /**
- * Se llama DESPUÉS de una validación OTP exitosa. Registra o refresca el
- * dispositivo confiable y renueva la cookie firmada.
+ * Se llama DESPUÉS de una validación OTP exitosa (o al terminar un login
+ * satisfactorio sin OTP, para renovar la cookie). Sobreescribe la cookie
+ * con el login actual y el timestamp de ahora.
  */
-function otp_dev_remember($codigo_usy) {
-    $codigo_usy = (int) $codigo_usy;
-
-    $uuid = otp_dev_read_cookie();
-    if (!$uuid) {
-        try {
-            $uuid = bin2hex(random_bytes(16));
-        } catch (Exception $e) {
-            $uuid = bin2hex(openssl_random_pseudo_bytes(16));
-        }
-    }
-    otp_dev_set_cookie($uuid); // renovar expiración siempre
-
-    $hash   = otp_dev_hash($uuid);
-    $ip     = otp_dev_ip();
-    $ua     = otp_dev_ua();
-    $ip_sql = $ip === '' ? "NULL" : "'" . addslashes($ip) . "'";
-    $ua_sql = $ua === '' ? "NULL" : "'" . addslashes($ua) . "'";
-
-    $exists = valor_rcri(
-        "a_userdev",
-        "codigo_usy = $codigo_usy AND hash_dev = '" . addslashes($hash) . "'",
-        "codigo_dev"
-    );
-
-    if ($exists) {
-        ejecutar(1,
-            "UPDATE a_userdev
-             SET fecult_dev    = current_timestamp,
-                 ip_dev        = $ip_sql,
-                 useragent_dev = $ua_sql,
-                 codigo_est    = 1
-             WHERE codigo_dev = $exists");
-    } else {
-        ejecutar(1,
-            "INSERT INTO a_userdev
-                (codigo_usy, hash_dev, useragent_dev, ip_dev, feccre_dev, fecult_dev, codigo_est)
-             VALUES
-                ($codigo_usy, '" . addslashes($hash) . "', $ua_sql, $ip_sql,
-                 current_timestamp, current_timestamp, 1)");
-    }
+function otp_dev_remember($login_usy) {
+    otp_dev_write_cookie((string) $login_usy, time());
 }
 
-/** Revoca un dispositivo concreto (útil para pantalla "Mis dispositivos") */
-function otp_dev_revoke($codigo_usy, $codigo_dev) {
-    $codigo_usy = (int) $codigo_usy;
-    $codigo_dev = (int) $codigo_dev;
-    ejecutar(1, "UPDATE a_userdev SET codigo_est = 2
-                 WHERE codigo_usy = $codigo_usy AND codigo_dev = $codigo_dev");
-}
-
-/** Revoca TODOS los dispositivos del usuario (cambio de password, sospecha, etc.) */
-function otp_dev_revoke_all($codigo_usy) {
-    $codigo_usy = (int) $codigo_usy;
-    ejecutar(1, "UPDATE a_userdev SET codigo_est = 2 WHERE codigo_usy = $codigo_usy");
+/** Borra la cookie del equipo actual (logout / revocación). */
+function otp_dev_forget() {
+    otp_dev_delete_cookie();
 }

@@ -4,36 +4,26 @@
  * SNIPPET DE REFERENCIA — NO ES UN ARCHIVO EJECUTABLE COMPLETO
  * ============================================================================
  * Inserta este bloque en tu `a_login.php` real, DESPUÉS de validar
- * usuario+password y de tener el `$codigo_usy` del usuario autenticado,
+ * usuario+password (y de tener disponibles $codigo_usy y $login_usy),
  * y ANTES del redirect a `a_otpauth.php`.
  *
  * Reemplaza al bloque actual que redirige incondicionalmente al OTP.
+ *
+ * Requisitos previos en la sesión (los debes setear al inicio del login,
+ * cuando cargas los datos del cliente):
+ *
+ *   $_SESSION["otpaut_cli"]   = 1 (pedir OTP) | 0 (no pedir)
+ *   $_SESSION["totpfrq_cli"]  = minutos de gracia (ej. 360 = 6h)
+ *                               0 o vacío → siempre pedir en cada logueo
  */
 
 include_once("a_otp_device.php");
 
-// 1) Datos del cliente para conocer la política OTP configurada
-$codcli = (int) valor_rcri("a_usersys", "codigo_usy = $codigo_usy", "codigo_cli");
+$decision = otp_dev_should_require($login_usy);
 
-$conf = arr_rcri1(
-    "SELECT COALESCE(otpaut_cli, 0)  AS otpaut,
-            COALESCE(otpfrq_cli, 1)  AS otpfrq,
-            COALESCE(otpmin_cli, 60) AS otpmin
-     FROM e_customer
-     WHERE codigo_cli = $codcli",
-    0
-);
-$otpaut = (int) ($conf[0]['otpaut'] ?? 0);
-$otpfrq = (int) ($conf[0]['otpfrq'] ?? 1);   // 1=always, 2=grace
-$otpmin = (int) ($conf[0]['otpmin'] ?? 60);  // minutos de gracia
-
-// 2) Decisión
-$decision = otp_dev_should_require($codigo_usy, $otpaut, $otpfrq, $otpmin);
-
-// 3) Ejecutar
 if ($decision['require_otp']) {
 
-    // ---- Flujo actual: redirigir a a_otpauth.php ----
+    // ---- Redirigir al OTP (flujo actual) ----
     $ccod = base64_encode(encrypt($codigo_usy));
     $key  = base64_encode(encrypt(json_encode([
         "ctime"      => time(),
@@ -46,9 +36,9 @@ if ($decision['require_otp']) {
 } else {
 
     // ---- Dispositivo confiable dentro de la ventana de gracia ----
-    // Aquí va la MISMA lógica que hoy corre después del OTP exitoso
-    // (case 2 de a_otpauth.php): armar $rcParam, generar $strKey, cerrar
-    // sesiones abiertas y redirigir a a_home.php.
+    // Aquí va la MISMA lógica que hoy corre en el case 2 de a_otpauth.php,
+    // más la renovación de la cookie con el timestamp actual.
+
     $arr_usr = arr_rcri1(
         "SELECT login_usy, passwd_usy FROM a_usersys WHERE codigo_usy = $codigo_usy",
         0
@@ -69,6 +59,9 @@ if ($decision['require_otp']) {
 
     $_SESSION['tcodigo_usy'] = $codigo_usy;
 
+    // Renovar la cookie (extiende la ventana de gracia desde ahora)
+    otp_dev_remember($login_usy);
+
     header("location: a_home.php?key=" . urlencode($strKey));
     exit;
 }
@@ -78,25 +71,22 @@ if ($decision['require_otp']) {
  * Matriz de decisión (ver otp_dev_should_require)
  * ============================================================================
  *
- *  otpaut_cli  otpfrq_cli   cookie 'did'    último OTP en device       → OTP?
- *  ----------  -----------  --------------  -------------------------  -----
- *  0 (off)     —            —               —                          NO
- *  ≥1          1 (always)   —               —                          SI
- *  ≥1          2 (grace)    ausente/mal     —                          SI
- *  ≥1          2 (grace)    válida          no hay registro            SI
- *  ≥1          2 (grace)    válida          > otpmin_cli minutos       SI
- *  ≥1          2 (grace)    válida          ≤ otpmin_cli minutos       NO
+ *  $_SESSION["otpaut_cli"]  $_SESSION["totpfrq_cli"]  cookie 'did' válida para $login_usy y ≤ N min   → OTP?
+ *  -----------------------  ------------------------  ----------------------------------------------  -----
+ *  0                        —                         —                                               NO
+ *  1                        0 o vacío                 —                                               SI
+ *  1                        > 0                       cookie ausente / firma inválida                 SI
+ *  1                        > 0                       cookie de OTRO usuario                          SI
+ *  1                        > 0                       cookie de este usuario, > totpfrq_cli minutos   SI
+ *  1                        > 0                       cookie de este usuario, ≤ totpfrq_cli minutos   NO
  *
  * ============================================================================
  * Gestión adicional
  * ============================================================================
  *
- *  - Cambio de password           → otp_dev_revoke_all($codigo_usy);
- *  - Botón "Cerrar sesión en otros
- *    dispositivos"                → otp_dev_revoke_all($codigo_usy);
- *  - Pantalla "Mis dispositivos"  → SELECT codigo_dev, useragent_dev, ip_dev,
- *                                          fecult_dev
- *                                   FROM   a_userdev
- *                                   WHERE  codigo_usy = ? AND codigo_est = 1;
- *                                   + botón que llame a otp_dev_revoke().
+ *   Logout / cambio de password / cualquier revocación
+ *   → otp_dev_forget();     // borra la cookie del equipo actual
+ *
+ *   Puedes seguir renovando la cookie también dentro del propio a_otpauth.php
+ *   (ya se hace tras un OTP válido en el case 1).
  */

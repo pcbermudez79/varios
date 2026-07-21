@@ -187,8 +187,11 @@ if ($step > 0) {
                              valip_res  = $ip_sql
                          WHERE codigo_res = $codigo_res");
 
-            // Registrar/refrescar el dispositivo confiable
-            otp_dev_remember($codigo_usy);
+            // Registrar/refrescar la cookie de dispositivo confiable (login + ts)
+            $login_dev = valor_rcri("a_usersys", "codigo_usy = $codigo_usy", "login_usy");
+            if ($login_dev) {
+                otp_dev_remember($login_dev);
+            }
 
             echo json_encode(["success" => true]);
             break;

@@ -6,6 +6,7 @@ aloneconfig();
 include_once("../app/common/e_conexion.php");
 include_once("../app/common/utilidades.php");
 include_once("../app/common/e_tools.php");
+include_once("a_otp_device.php");
 
 // -----------------------------------------------------------------------------
 // Configuración OTP
@@ -185,6 +186,9 @@ if ($step > 0) {
                              verifi_res = current_timestamp,
                              valip_res  = $ip_sql
                          WHERE codigo_res = $codigo_res");
+
+            // Registrar/refrescar el dispositivo confiable
+            otp_dev_remember($codigo_usy);
 
             echo json_encode(["success" => true]);
             break;

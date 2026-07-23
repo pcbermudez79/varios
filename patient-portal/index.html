@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="es" data-bs-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>+Life EPS/IPS · Portal del Paciente</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="styles.css" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- App shell -->
+  <div class="app-shell" id="appShell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+      <div class="sidebar-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <i class="bi bi-plus-lg"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">+Life</span>
+          <span class="brand-sub">EPS · IPS</span>
+        </div>
+      </div>
+
+      <div class="sidebar-user">
+        <div class="avatar avatar-md" aria-hidden="true">MP</div>
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name">Mariela Pineda</span>
+          <span class="sidebar-user-meta">
+            <span class="dot dot-success"></span> Activa · Cotizante
+          </span>
+        </div>
+      </div>
+
+      <nav class="side-nav" aria-label="Secciones">
+        <div class="side-nav-label">Principal</div>
+        <a class="side-nav-item is-active" href="#" data-tip="Inicio">
+          <i class="bi bi-grid-1x2"></i><span>Inicio</span>
+        </a>
+        <a class="side-nav-item" href="#" data-tip="Mi salud">
+          <i class="bi bi-heart-pulse"></i><span>Mi salud</span>
+        </a>
+        <a class="side-nav-item" href="#" data-tip="Citas">
+          <i class="bi bi-calendar2-check"></i><span>Citas</span>
+          <span class="side-nav-badge">3</span>
+        </a>
+        <a class="side-nav-item" href="#" data-tip="Medicamentos">
+          <i class="bi bi-capsule"></i><span>Medicamentos</span>
+        </a>
+        <a class="side-nav-item" href="#" data-tip="Laboratorio">
+          <i class="bi bi-clipboard2-pulse"></i><span>Laboratorio</span>
+        </a>
+        <a class="side-nav-item" href="#" data-tip="Telemedicina">
+          <i class="bi bi-camera-video"></i><span>Telemedicina</span>
+        </a>
+
+        <div class="side-nav-label">Cuenta</div>
+        <a class="side-nav-item" href="#" data-tip="Grupo familiar">
+          <i class="bi bi-people"></i><span>Grupo familiar</span>
+        </a>
+        <a class="side-nav-item" href="#" data-tip="Transacciones">
+          <i class="bi bi-arrow-left-right"></i><span>Transacciones</span>
+        </a>
+        <a class="side-nav-item" href="#" data-tip="Configuración">
+          <i class="bi bi-gear"></i><span>Configuración</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <button class="btn btn-ghost w-100 justify-content-start" type="button">
+          <i class="bi bi-box-arrow-right"></i><span>Cerrar sesión</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Backdrop (móvil) -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+    <!-- MAIN -->
+    <div class="app-main">
+
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="icon-btn topbar-toggle" id="sidebarToggle" type="button" aria-label="Alternar menú">
+          <i class="bi bi-list"></i>
+        </button>
+
+        <div class="topbar-search">
+          <i class="bi bi-search"></i>
+          <input type="search" placeholder="Buscar consultas, medicamentos, especialistas..." aria-label="Buscar" />
+          <kbd class="topbar-kbd">⌘K</kbd>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="icon-btn" id="themeToggle" type="button" aria-label="Cambiar tema">
+            <i class="bi bi-moon-stars"></i>
+          </button>
+          <button class="icon-btn" type="button" aria-label="Idioma">
+            <i class="bi bi-translate"></i>
+          </button>
+          <button class="icon-btn has-dot" type="button" aria-label="Notificaciones">
+            <i class="bi bi-bell"></i>
+          </button>
+
+          <div class="topbar-divider" aria-hidden="true"></div>
+
+          <div class="user-chip" tabindex="0" role="button" aria-haspopup="menu">
+            <div class="avatar avatar-sm">MP</div>
+            <div class="user-chip-text">
+              <span class="user-chip-name">Mariela Pineda</span>
+              <span class="user-chip-role">Beneficiario</span>
+            </div>
+            <i class="bi bi-chevron-down"></i>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="content" id="content">
+
+        <!-- Page header -->
+        <section class="page-header">
+          <div>
+            <p class="eyebrow">Panel del paciente</p>
+            <h1 class="page-title">Hola, Mariela <span aria-hidden="true">👋</span></h1>
+            <p class="page-sub">Este es tu resumen de salud al día de hoy, <time datetime="2026-07-23">23 de julio de 2026</time>.</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline-secondary" type="button">
+              <i class="bi bi-download"></i> Descargar historia
+            </button>
+            <button class="btn btn-primary" type="button" data-scroll-to="#agendar">
+              <i class="bi bi-calendar-plus"></i> Agendar cita
+            </button>
+          </div>
+        </section>
+
+        <!-- KPI STRIP -->
+        <section class="kpi-grid" aria-label="Resumen de atenciones">
+          <article class="kpi-card">
+            <div class="kpi-icon kpi-icon-teal"><i class="bi bi-clipboard2-heart"></i></div>
+            <div class="kpi-body">
+              <span class="kpi-label">Consultas</span>
+              <span class="kpi-value">31</span>
+              <span class="kpi-trend trend-up"><i class="bi bi-arrow-up-right"></i> +4 vs. semestre</span>
+            </div>
+          </article>
+          <article class="kpi-card">
+            <div class="kpi-icon kpi-icon-blue"><i class="bi bi-eyedropper"></i></div>
+            <div class="kpi-body">
+              <span class="kpi-label">Laboratorio</span>
+              <span class="kpi-value">5</span>
+              <span class="kpi-trend trend-neutral"><i class="bi bi-dash"></i> Sin cambios</span>
+            </div>
+          </article>
+          <article class="kpi-card">
+            <div class="kpi-icon kpi-icon-violet"><i class="bi bi-activity"></i></div>
+            <div class="kpi-body">
+              <span class="kpi-label">Ayudas Dx</span>
+              <span class="kpi-value">6</span>
+              <span class="kpi-trend trend-up"><i class="bi bi-arrow-up-right"></i> +2 este mes</span>
+            </div>
+          </article>
+          <article class="kpi-card">
+            <div class="kpi-icon kpi-icon-amber"><i class="bi bi-capsule-pill"></i></div>
+            <div class="kpi-body">
+              <span class="kpi-label">Medicamentos</span>
+              <span class="kpi-value">4</span>
+              <span class="kpi-trend trend-down"><i class="bi bi-arrow-down-right"></i> 1 por vencer</span>
+            </div>
+          </article>
+        </section>
+
+        <!-- MAIN GRID -->
+        <section class="main-grid">
+
+          <!-- Profile card -->
+          <article class="card card-profile">
+            <header class="card-header">
+              <div class="card-title-group">
+                <i class="bi bi-person-badge"></i>
+                <h2 class="card-title">Mi Perfil</h2>
+              </div>
+              <span class="badge badge-success">
+                <span class="dot dot-success"></span> Activo
+              </span>
+            </header>
+
+            <div class="profile-hero">
+              <div class="avatar avatar-xl">MP</div>
+              <div>
+                <h3 class="profile-name">Mariela Pineda</h3>
+                <p class="profile-doc">CC 51.773.940 · 61 años</p>
+                <div class="profile-tags">
+                  <span class="chip chip-teal">Cotizante</span>
+                  <span class="chip chip-amber">Hipertensión arterial</span>
+                </div>
+              </div>
+            </div>
+
+            <dl class="data-list">
+              <div><dt>GMA</dt><dd><span class="chip chip-muted">NC</span></dd></div>
+              <div><dt>Programa</dt><dd>Hipertensión arterial</dd></div>
+              <div><dt>Teléfono</dt><dd>672 5007</dd></div>
+              <div><dt>Celular</dt><dd class="text-muted">— sin registrar</dd></div>
+              <div><dt>Correo</dt><dd class="text-muted">— sin registrar</dd></div>
+            </dl>
+
+            <footer class="card-footer">
+              <button class="btn btn-sm btn-outline-secondary" type="button">
+                <i class="bi bi-pencil-square"></i> Actualizar datos
+              </button>
+              <div class="notify-toggle">
+                <label class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" checked id="notif" />
+                  <span class="form-check-label" for="notif">Notificación automática</span>
+                </label>
+              </div>
+            </footer>
+          </article>
+
+          <!-- Care network + Family stack -->
+          <div class="stack">
+
+            <article class="card">
+              <header class="card-header">
+                <div class="card-title-group">
+                  <i class="bi bi-hospital"></i>
+                  <h2 class="card-title">Mi Red de Atención</h2>
+                </div>
+                <span class="badge badge-teal">IPS asignada</span>
+              </header>
+
+              <div class="network-grid">
+                <div class="network-item">
+                  <span class="network-label">IPS</span>
+                  <span class="network-value">Pana Desarrollo</span>
+                </div>
+                <div class="network-item">
+                  <span class="network-label">Programa</span>
+                  <span class="chip chip-amber">Hipertensión arterial</span>
+                </div>
+                <div class="network-item">
+                  <span class="network-label">Teléfono</span>
+                  <span class="network-value">01 8000 12 3456</span>
+                </div>
+                <div class="network-item">
+                  <span class="network-label">Horario</span>
+                  <span class="network-value">L–S · 7:00 a 19:00</span>
+                </div>
+              </div>
+
+              <a href="#" class="card-link">
+                Ver ubicación y contacto <i class="bi bi-arrow-right"></i>
+              </a>
+            </article>
+
+            <article class="card">
+              <header class="card-header">
+                <div class="card-title-group">
+                  <i class="bi bi-people"></i>
+                  <h2 class="card-title">Grupo Familiar</h2>
+                </div>
+                <span class="badge badge-blue">Tiempo real</span>
+              </header>
+
+              <ul class="member-list">
+                <li class="member-item">
+                  <div class="avatar avatar-sm avatar-pink" aria-hidden="true">TB</div>
+                  <div class="member-info">
+                    <span class="member-name">Tania Angélica Beltrán Murcia</span>
+                    <span class="member-meta">RC 645874 · Beneficiario</span>
+                  </div>
+                  <span class="badge badge-outline">Activa</span>
+                </li>
+              </ul>
+
+              <button class="btn btn-sm btn-outline-secondary w-100" type="button">
+                <i class="bi bi-person-plus"></i> Agregar beneficiario
+              </button>
+            </article>
+
+          </div>
+
+          <!-- Attendance + Telemedicine stack -->
+          <div class="stack">
+
+            <article class="card">
+              <header class="card-header">
+                <div class="card-title-group">
+                  <i class="bi bi-graph-up-arrow"></i>
+                  <h2 class="card-title">Asistencia a citas</h2>
+                </div>
+                <span class="text-muted small">Últimos 12 meses</span>
+              </header>
+
+              <div class="donut-wrap">
+                <div class="donut-chart">
+                  <canvas id="attendanceChart" height="180" aria-label="Cumplimiento de citas"></canvas>
+                  <div class="donut-center">
+                    <span class="donut-value">87%</span>
+                    <span class="donut-label">Cumplimiento</span>
+                  </div>
+                </div>
+                <ul class="legend">
+                  <li><span class="legend-dot" style="background:var(--c-primary)"></span> Cumplidas <b>27</b></li>
+                  <li><span class="legend-dot" style="background:var(--c-border-strong)"></span> Incumplidas <b>4</b></li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="card telemed-card">
+              <div class="telemed-icon"><i class="bi bi-camera-video"></i></div>
+              <div>
+                <span class="badge badge-warning-soft">Sin reserva</span>
+                <h3 class="telemed-title">Telemedicina</h3>
+                <p class="telemed-sub">Agenda una videoconsulta con médico general en menos de 15 minutos.</p>
+              </div>
+              <button class="btn btn-primary" type="button">
+                <i class="bi bi-plus-lg"></i> Reservar
+              </button>
+            </article>
+
+          </div>
+
+        </section>
+
+        <!-- APPOINTMENTS -->
+        <section class="appts-grid" id="agendar">
+
+          <!-- Assign appointment (wizard) -->
+          <article class="card">
+            <header class="card-header">
+              <div class="card-title-group">
+                <i class="bi bi-calendar2-plus"></i>
+                <h2 class="card-title">Asignar cita</h2>
+              </div>
+              <div class="btn-group" role="tablist" aria-label="Tipo de asignación">
+                <button class="btn btn-sm btn-primary" type="button">Cita médica</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button">Otros procedimientos</button>
+              </div>
+            </header>
+
+            <ol class="stepper" aria-label="Pasos">
+              <li class="step is-done"><span class="step-index">1</span><span class="step-label">Paciente</span></li>
+              <li class="step is-current"><span class="step-index">2</span><span class="step-label">Especialidad</span></li>
+              <li class="step"><span class="step-index">3</span><span class="step-label">Fecha</span></li>
+            </ol>
+
+            <form class="assign-form" onsubmit="return false">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="paciente">Paciente</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person-check"></i></span>
+                    <select id="paciente" class="form-select">
+                      <option>Mariela Pineda (yo)</option>
+                      <option>Tania A. Beltrán</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="especialidad">Especialidad</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-stethoscope"></i></span>
+                    <select id="especialidad" class="form-select">
+                      <option>Psicología</option>
+                      <option>Medicina general</option>
+                      <option>Cardiología</option>
+                      <option>Nutrición</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="tipo">Tipo de atención</label>
+                  <div class="segmented" role="radiogroup" aria-label="Tipo de atención">
+                    <label><input type="radio" name="tipo" checked /> <span><i class="bi bi-building"></i> Presencial</span></label>
+                    <label><input type="radio" name="tipo" /> <span><i class="bi bi-camera-video"></i> Virtual</span></label>
+                    <label><input type="radio" name="tipo" /> <span><i class="bi bi-house-heart"></i> Domicilio</span></label>
+                  </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="fecha">Fecha deseada</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                    <input id="fecha" type="date" class="form-control" value="2026-07-22" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="assign-actions">
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi bi-lightning-charge"></i> Solicitud inmediata
+                </button>
+                <button class="btn btn-outline-secondary" type="button">
+                  Programar
+                </button>
+                <span class="assign-hint text-muted"><i class="bi bi-info-circle"></i> Recibirás confirmación en tu correo.</span>
+              </div>
+            </form>
+          </article>
+
+          <!-- Upcoming (tabs) -->
+          <article class="card">
+            <header class="card-header">
+              <div class="card-title-group">
+                <i class="bi bi-calendar-week"></i>
+                <h2 class="card-title">Próximas atenciones</h2>
+              </div>
+              <span class="badge badge-teal">Agenda programada</span>
+            </header>
+
+            <nav class="tabs" role="tablist" aria-label="Próximas atenciones">
+              <button role="tab" aria-selected="true" class="tab is-active" data-tab="consultas">Consultas <span class="tab-count">2</span></button>
+              <button role="tab" aria-selected="false" class="tab" data-tab="ayudas">Ayudas Dx <span class="tab-count">1</span></button>
+              <button role="tab" aria-selected="false" class="tab" data-tab="medicamentos">Medicamentos <span class="tab-count">1</span></button>
+            </nav>
+
+            <div class="tab-panels">
+              <div class="tab-panel is-active" data-panel="consultas">
+                <ul class="appt-list">
+                  <li class="appt-item">
+                    <div class="appt-date">
+                      <span class="appt-day">05</span>
+                      <span class="appt-mon">AGO</span>
+                    </div>
+                    <div class="appt-info">
+                      <span class="appt-title">Control cardiología</span>
+                      <span class="appt-meta"><i class="bi bi-person"></i> Dr. Freddy Pana · <i class="bi bi-building"></i> IPS Pana Desarrollo</span>
+                    </div>
+                    <span class="badge badge-teal">10:30</span>
+                  </li>
+                  <li class="appt-item">
+                    <div class="appt-date">
+                      <span class="appt-day">18</span>
+                      <span class="appt-mon">AGO</span>
+                    </div>
+                    <div class="appt-info">
+                      <span class="appt-title">Psicología</span>
+                      <span class="appt-meta"><i class="bi bi-camera-video"></i> Virtual · Dra. L. Rojas</span>
+                    </div>
+                    <span class="badge badge-blue">14:00</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="tab-panel" data-panel="ayudas" hidden>
+                <ul class="appt-list">
+                  <li class="appt-item">
+                    <div class="appt-date">
+                      <span class="appt-day">09</span>
+                      <span class="appt-mon">AGO</span>
+                    </div>
+                    <div class="appt-info">
+                      <span class="appt-title">Ecocardiograma</span>
+                      <span class="appt-meta"><i class="bi bi-building"></i> Diagnóstico Central · 8:00</span>
+                    </div>
+                    <span class="badge badge-warning-soft">Post-fechado</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="tab-panel" data-panel="medicamentos" hidden>
+                <ul class="appt-list">
+                  <li class="appt-item">
+                    <div class="appt-date">
+                      <span class="appt-day">30</span>
+                      <span class="appt-mon">JUL</span>
+                    </div>
+                    <div class="appt-info">
+                      <span class="appt-title">Losartán 50 mg</span>
+                      <span class="appt-meta">Renovación mensual · Farmacia Pana</span>
+                    </div>
+                    <span class="badge badge-warning-soft">Retirar</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+        </section>
+
+        <!-- HISTORY TABLE -->
+        <section class="card">
+          <header class="card-header">
+            <div class="card-title-group">
+              <i class="bi bi-clock-history"></i>
+              <h2 class="card-title">Últimas consultas</h2>
+              <span class="text-muted small">últimos 180 días</span>
+            </div>
+            <div class="d-flex gap-2">
+              <div class="input-group input-group-sm" style="max-width:220px">
+                <span class="input-group-text"><i class="bi bi-funnel"></i></span>
+                <select class="form-select">
+                  <option>Todas las especialidades</option>
+                  <option>Medicina general</option>
+                  <option>Cardiología</option>
+                </select>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" type="button">
+                <i class="bi bi-download"></i> Exportar
+              </button>
+            </div>
+          </header>
+
+          <div class="table-responsive">
+            <table class="table table-clean align-middle">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Médico</th>
+                  <th>Especialidad</th>
+                  <th>Diagnóstico</th>
+                  <th>Estado</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><time datetime="2026-05-01">01 May 2026</time></td>
+                  <td class="td-doctor">
+                    <div class="avatar avatar-xs avatar-blue">FP</div>
+                    Freddy Pana
+                  </td>
+                  <td>Medicina general</td>
+                  <td>Hipertensión arterial</td>
+                  <td><span class="badge badge-warning-soft">Autorizado</span></td>
+                  <td class="text-end">
+                    <button class="icon-btn-sm" title="Ver"><i class="bi bi-eye"></i></button>
+                    <button class="icon-btn-sm" title="Descargar"><i class="bi bi-cloud-download"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><time datetime="2026-04-20">20 Abr 2026</time></td>
+                  <td class="td-doctor">
+                    <div class="avatar avatar-xs avatar-blue">FP</div>
+                    Freddy Pana
+                  </td>
+                  <td>Medicina general</td>
+                  <td>Control HTA</td>
+                  <td><span class="badge badge-success">Cumplida</span></td>
+                  <td class="text-end">
+                    <button class="icon-btn-sm" title="Ver"><i class="bi bi-eye"></i></button>
+                    <button class="icon-btn-sm" title="Descargar"><i class="bi bi-cloud-download"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><time datetime="2026-03-11">11 Mar 2026</time></td>
+                  <td class="td-doctor">
+                    <div class="avatar avatar-xs avatar-pink">LR</div>
+                    Laura Rojas
+                  </td>
+                  <td>Psicología</td>
+                  <td>Manejo de estrés</td>
+                  <td><span class="badge badge-success">Cumplida</span></td>
+                  <td class="text-end">
+                    <button class="icon-btn-sm" title="Ver"><i class="bi bi-eye"></i></button>
+                    <button class="icon-btn-sm" title="Descargar"><i class="bi bi-cloud-download"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><time datetime="2026-02-02">02 Feb 2026</time></td>
+                  <td class="td-doctor">
+                    <div class="avatar avatar-xs avatar-teal">JC</div>
+                    Julián Cárdenas
+                  </td>
+                  <td>Cardiología</td>
+                  <td>Ecocardiograma normal</td>
+                  <td><span class="badge badge-danger-soft">Incumplida</span></td>
+                  <td class="text-end">
+                    <button class="icon-btn-sm" title="Ver"><i class="bi bi-eye"></i></button>
+                    <button class="icon-btn-sm" title="Descargar"><i class="bi bi-cloud-download"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <footer class="app-footer">
+          <span>© 2026 +Life EPS/IPS · Pana Patients App</span>
+          <span class="text-muted">v2.5 · Última sincronización hace 2 min</span>
+        </footer>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

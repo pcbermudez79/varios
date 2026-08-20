@@ -1,0 +1,6 @@
+node_modules/
+dist/
+certs/agent.key
+certs/agent.crt
+*.log
+.DS_Store

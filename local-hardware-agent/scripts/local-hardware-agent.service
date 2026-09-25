@@ -1,0 +1,17 @@
+[Unit]
+Description=Local Hardware Agent
+After=network.target cups.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/local-hardware-agent-linux
+Restart=always
+RestartSec=3
+Environment=AGENT_ALLOWED_ORIGINS=https://mi-app.ejemplo.com,http://localhost:3000
+# Environment=AGENT_API_TOKEN=change-me
+# Environment=AGENT_TLS=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
